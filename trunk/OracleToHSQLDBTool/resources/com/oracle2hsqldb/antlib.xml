@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<antlib>
+   <typedef name="schemacopy" classname="com.oracle2hsqldb.ant.SchemaCopyTask"/>
+   <typedef name="schemaexport" classname="com.oracle2hsqldb.ant.SchemaExportTask"/>
+</antlib>

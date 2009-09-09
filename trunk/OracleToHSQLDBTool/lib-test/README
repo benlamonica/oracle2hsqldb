@@ -1,0 +1,5 @@
+The jars in the lib-test directory when checked out from the repository should include:
+
+easymock.jar                    for mocks
+easymockclassextension.jar      for mocking classes
+junit.jar                       for unit tests

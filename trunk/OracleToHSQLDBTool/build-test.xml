@@ -1,0 +1,20 @@
+<project>
+	<path id="xxx-lib">
+		<pathelement path="classes"/>
+		<fileset dir="lib">
+            <include name="**/*.jar"/>
+        </fileset>
+    </path>
+
+	
+	<typedef resource="edu/northwestern/bioinformatics/schemamule/antlib.xml" 
+	    uri="http://bioinformatics.northwestern.edu/schemamule" classpathref="xxx-lib"/>
+	
+	<target name="xxx">
+		<schemacopy xmlns="http://bioinformatics.northwestern.edu/schemamule">
+		    <to uri="jdbc:hsqldb:file:mydb" username="sa" password=""/>
+		    <from uri="jdbc:oracle:thin:@lua.sinfic.pt:1521:LUA" username="IPDMS25" password="ipdms25" />
+		</schemacopy>
+	</target>
+	
+</project>
