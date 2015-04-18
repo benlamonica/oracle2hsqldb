@@ -22,19 +22,19 @@
 
 package com.oracle2hsqldb.ant;
 
-import junit.framework.TestCase;
-import org.apache.tools.ant.BuildException;
-import org.apache.tools.ant.Project;
-import org.easymock.MockControl;
-import org.easymock.classextension.MockClassControl;
-
-import com.oracle2hsqldb.dialect.HSQLDialect;
-import com.oracle2hsqldb.dialect.Oracle9Dialect;
-
 import java.net.URISyntaxException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+
+import junit.framework.TestCase;
+
+import org.apache.tools.ant.BuildException;
+import org.apache.tools.ant.Project;
+import org.easymock.EasyMock;
+
+import com.oracle2hsqldb.dialect.HSQLDialect;
+import com.oracle2hsqldb.dialect.Oracle9Dialect;
 
 /**
  * @author Moses Hohman
@@ -231,16 +231,15 @@ public class SchemaParamsTest extends TestCase {
     }
 
     public void testTeardownCallsExecutesShutdownSql() throws SQLException, URISyntaxException {
-        MockControl control = MockClassControl.createStrictControl(StatementBatch.class, new Class[] { Statement.class, Integer.TYPE }, new Object[] { null, new Integer(0) });
-        StatementBatch mock = (StatementBatch) control.getMock();
+        StatementBatch mock = EasyMock.createMock(StatementBatch.class);
 
         params.setUri("jdbc:hsqldb:mem:whatever");
         mock.executeUpdate(params.getDialect().getShutdownSql());
-        control.replay();
+        EasyMock.replay(mock);
 
         params.teardown(mock);
 
-        control.verify();
+        EasyMock.verify(mock);
     }
 
     public void testAddTableThrowsBuildExceptionIfTableIsInvalid() {

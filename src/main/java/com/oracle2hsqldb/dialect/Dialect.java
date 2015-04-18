@@ -23,13 +23,20 @@
 package com.oracle2hsqldb.dialect;
 
 
+import java.sql.SQLException;
+import java.util.List;
+import java.util.Map;
+
 import javax.sql.DataSource;
+
+import org.springframework.util.MultiValueMap;
 
 import com.oracle2hsqldb.Column;
 import com.oracle2hsqldb.DefaultValue;
-
-import java.sql.SQLException;
-import java.util.Iterator;
+import com.oracle2hsqldb.PrimaryKey;
+import com.oracle2hsqldb.Sequence;
+import com.oracle2hsqldb.Table;
+import com.oracle2hsqldb.UniqueConstraint;
 
 /**
  * @author Moses Hohman
@@ -48,15 +55,15 @@ public interface Dialect {
 
     String getIdentityColumnString();
 
-    Iterator getTables(DataSource dataSource, String schemaName) throws SQLException;
+    List<Table.Spec> getTables(DataSource dataSource, String schemaName) throws SQLException;
 
-    Iterator getColumns(DataSource dataSource, String schemaName) throws SQLException;
+    MultiValueMap<String, Column.Spec> getColumns(DataSource dataSource, String schemaName, List<Table.Spec> tables) throws SQLException;
 
-    Iterator getSequences(DataSource dataSource, String schemaName) throws SQLException;
+    List<Sequence> getSequences(DataSource dataSource, String schemaName) throws SQLException;
 
-    Iterator getPrimaryKeys(DataSource dataSource, String schemaName);
+    Map<String, PrimaryKey.Spec> getPrimaryKeys(DataSource dataSource, String schemaName, List<Table.Spec> tables);
 
-    Iterator getUniqueKeys(DataSource dataSource, String schemaName);
+    List<UniqueConstraint.Spec> getUniqueKeys(DataSource dataSource, String schemaName, List<Table.Spec> tables);
 
     int getType(String dataTypeName);
 

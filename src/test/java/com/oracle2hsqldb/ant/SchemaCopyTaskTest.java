@@ -22,27 +22,26 @@
 
 package com.oracle2hsqldb.ant;
 
-import junit.framework.TestCase;
-import org.apache.tools.ant.BuildEvent;
-import org.apache.tools.ant.BuildException;
-import org.apache.tools.ant.BuildLogger;
-import org.apache.tools.ant.Project;
-import org.easymock.MockControl;
-import org.easymock.classextension.MockClassControl;
-
-import com.oracle2hsqldb.Column;
-import com.oracle2hsqldb.Schema;
-import com.oracle2hsqldb.Table;
-
-
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.io.File;
 import java.net.URISyntaxException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashSet;
+
+import junit.framework.TestCase;
+
+import org.apache.tools.ant.BuildEvent;
+import org.apache.tools.ant.BuildException;
+import org.apache.tools.ant.BuildLogger;
+import org.apache.tools.ant.Project;
+import org.easymock.EasyMock;
+
+import com.oracle2hsqldb.Column;
+import com.oracle2hsqldb.Schema;
+import com.oracle2hsqldb.Table;
 
 /**
  * @author Moses Hohman
@@ -151,18 +150,16 @@ public class SchemaCopyTaskTest extends TestCase {
     }
 
     public void testExecuteTearsdownTo() throws IOException, URISyntaxException, SQLException {
-        MockControl control = MockClassControl.createStrictControl(SchemaParams.class);
-        control.setDefaultMatcher(MockControl.ALWAYS_MATCHER);
-        SchemaParams mockTo = (SchemaParams) control.getMock();
+        SchemaParams mockTo = EasyMock.createMock(SchemaParams.class);
         SchemaParams from = createHsqlSchemaParams();
 
         mockTo.setTask(null);
         mockTo.validate();
-        control.expectAndReturn(mockTo.getIncludedTables(), new HashSet());
-        control.expectAndReturn(mockTo.getConnection(), createHsqlSchemaParams().getConnection());
+        EasyMock.expect(mockTo.getIncludedTables()).andReturn(new HashSet<Object>());
+        EasyMock.expect(mockTo.getConnection()).andReturn(createHsqlSchemaParams().getConnection());
         mockTo.writeSchemas(null, null);
         mockTo.teardown(null);
-        control.replay();
+        EasyMock.replay(mockTo);
 
         task.setProject(project);
         task.addConfiguredTo(mockTo);
@@ -170,7 +167,7 @@ public class SchemaCopyTaskTest extends TestCase {
 
         task.execute();
 
-        control.verify();
+        EasyMock.verify(mockTo);
     }
 
     private void verify(SchemaParams to) throws SQLException {

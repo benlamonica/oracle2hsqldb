@@ -22,29 +22,27 @@
 
 package com.oracle2hsqldb.dialect;
 
-import net.sf.hibernate.MappingException;
-
 import java.sql.Types;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.hibernate.MappingException;
+
 import com.oracle2hsqldb.Column;
 import com.oracle2hsqldb.DefaultValue;
-import com.sun.org.apache.xalan.internal.xsltc.compiler.util.Type;
 
 /**
  * @author Moses Hohman
  */
 public class HSQLDialect extends GenericDialect {
-    private static final net.sf.hibernate.dialect.Dialect HSQL_DIALECT = new net.sf.hibernate.dialect.HSQLDialect();
+    private static final org.hibernate.dialect.HSQLDialect HSQL_DIALECT = new org.hibernate.dialect.HSQLDialect();
 
-    private static Map TYPES_BY_NAME = new HashMap();
-    private static Map TYPES_BY_TYPE = new HashMap();
+    private static Map<String, Integer> TYPES_BY_NAME = new HashMap<String, Integer>();
+    private static Map<Integer, String> TYPES_BY_TYPE = new HashMap<Integer, String>();
 
     private static void registerType(String typeName, int type) {
-        Integer objectType = new Integer(type);
-        TYPES_BY_NAME.put(typeName, objectType);
-        TYPES_BY_TYPE.put(objectType, typeName);
+        TYPES_BY_NAME.put(typeName, type);
+        TYPES_BY_TYPE.put(type, typeName);
     }
 
     static {

@@ -22,18 +22,18 @@
 
 package com.oracle2hsqldb;
 
-import java.util.List;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * @author Moses Hohman
  */
 public class Schema {
     private String name;
-    private List tables = new LinkedList();
-    private List sequences = new LinkedList();
+    private List<Table> tables = new ArrayList<Table>();
+    private List<Sequence> sequences = new ArrayList<Sequence>();
 
     public Schema(String name) {
         this.name = name;
@@ -43,7 +43,7 @@ public class Schema {
         return name;
     }
 
-    public List tables() {
+    public List<Table> tables() {
         return Collections.unmodifiableList(tables);
     }
 
@@ -62,7 +62,7 @@ public class Schema {
         return null;
     }
 
-    public List sequences() {
+    public List<Sequence> sequences() {
         return Collections.unmodifiableList(sequences);
     }
 

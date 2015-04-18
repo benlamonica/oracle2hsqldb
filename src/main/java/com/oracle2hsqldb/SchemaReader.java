@@ -22,14 +22,18 @@
 
 package com.oracle2hsqldb;
 
-import org.apache.log4j.Logger;
-import org.springframework.jdbc.datasource.SingleConnectionDataSource;
-
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import javax.sql.DataSource;
+
+import org.apache.log4j.Logger;
+import org.springframework.jdbc.datasource.SingleConnectionDataSource;
+import org.springframework.util.MultiValueMap;
 
 /**
  * @author Moses Hohman
@@ -65,9 +69,8 @@ public class SchemaReader {
         Schema schema = new Schema(schemaName);
 
         log.info("Reading tables ...");
-        Iterator tables = configuration().dialect().getTables(dataSource, schemaName);
-        while (tables.hasNext()) {
-            Table.Spec spec = (Table.Spec) tables.next();
+        List<Table.Spec> tables = configuration().dialect().getTables(dataSource, schemaName);
+        for (Table.Spec spec : tables) {
             if (filter.accept(spec.getTable())) {
                 log.debug("Accepted table " + spec.getTableName());
                 schema.addTable(spec.getTable());
@@ -77,16 +80,19 @@ public class SchemaReader {
         }
 
         log.info("Reading columns ...");
-        Iterator columns = configuration().dialect().getColumns(dataSource, schemaName);
-        while (columns.hasNext()) {
-            Column.Spec spec = (Column.Spec) columns.next();
-            Table table = schema.findTable(spec.getTableName());
-            if (table != null) table.addColumn(spec.getColumn());
-        }
+        MultiValueMap<String, Column.Spec> columns = configuration().dialect().getColumns(dataSource, schemaName, tables);
+        for (Table.Spec table : tables) {
+        	for (Column.Spec column : columns.get(table.getTableName())) {
+        		Table t = schema.findTable(table.getTableName());
+        		if (t != null) {
+        			t.addColumn(column.getColumn());
+        		}
+        	}
+		}
 
-        if (configuration().supportsPrimaryKeys()) readPrimaryKeys(schema);
+        if (configuration().supportsPrimaryKeys()) readPrimaryKeys(schema, tables);
         if (configuration().supportsForeignKeys()) readForeignKeys(schema);
-        if (configuration().supportsUniqueKeys()) readUniqueKeys(schema);
+        if (configuration().supportsUniqueKeys()) readUniqueKeys(schema, tables);
 
         log.info("Supports sequences? " + configuration().supportsSequences());
         if (configuration().supportsSequences()) readSequences(schemaName, schema);
@@ -98,32 +104,32 @@ public class SchemaReader {
     private void readSequences(String schemaName, Schema schema) throws SQLException {
         log.info("Reading sequences ...");
 
-        Iterator seq = configuration().dialect().getSequences(dataSource, schemaName);
-        while (seq.hasNext()) {
-            Sequence sequence = (Sequence) seq.next();
-            schema.addSequence(sequence);
-        }
+        List<Sequence> seq = configuration().dialect().getSequences(dataSource, schemaName);
+        for (Sequence sequence : seq) {
+        	schema.addSequence(sequence);
+		}
     }
 
-    private void readPrimaryKeys(Schema schema) {
+    private void readPrimaryKeys(Schema schema, List<Table.Spec> tables) {
         log.info("Reading primary keys...");
 
-        Iterator keys = configuration().dialect().getPrimaryKeys(dataSource, schema.name());
-        while (keys.hasNext()) {
-            PrimaryKey.Spec spec = (PrimaryKey.Spec) keys.next();
-            Table table = schema.findTable(spec.getTableName());
-            if (table != null) {
-                spec.addPrimaryKey(table);
-            }
-        }
+        Map<String, PrimaryKey.Spec> keys = configuration().dialect().getPrimaryKeys(dataSource, schema.name(), tables);
+        for (Table.Spec table : tables) {
+        	PrimaryKey.Spec pk = keys.get(table.getTableName());
+        	if (pk != null) {
+        		Table t = schema.findTable(table.getTableName());
+        		if (t!=null) {
+        			pk.addPrimaryKey(t);
+        		}
+        	}
+		}
     }
 
-    private void readUniqueKeys(Schema schema) {
+    private void readUniqueKeys(Schema schema, List<Table.Spec> tables) {
         log.info("Reading unique keys...");
 
-        Iterator keys = configuration().dialect().getUniqueKeys(dataSource, schema.name());
-        while (keys.hasNext()) {
-            UniqueConstraint.Spec spec = (UniqueConstraint.Spec) keys.next();
+        List<UniqueConstraint.Spec> keys = configuration().dialect().getUniqueKeys(dataSource, schema.name(), tables);
+        for (UniqueConstraint.Spec spec : keys) {
             Table table = schema.findTable(spec.getTableName());
             if (table != null && spec.getColumnName() != null) {
                 Column indexed = table.findColumn(spec.getColumnName());

@@ -37,7 +37,7 @@ public class Table {
     private String name;
     private PrimaryKey primaryKey;
     private List columns = new LinkedList();
-    private Map constraints = new HashMap();
+    private Map<String, UniqueConstraint> constraints = new HashMap<String, UniqueConstraint>();
     private Type type;
 
     public Table(String name) {
@@ -100,7 +100,12 @@ public class Table {
     }
 
     public UniqueConstraint findConstraint(String name) {
-        return (UniqueConstraint) constraints.get(name);
+    	for (String constraintName : constraints.keySet()) {
+			if (constraintName.startsWith(name)) {
+				return constraints.get(constraintName);
+			}
+		}
+        return null;
     }
 
     public void addConstraint(UniqueConstraint constraint) {

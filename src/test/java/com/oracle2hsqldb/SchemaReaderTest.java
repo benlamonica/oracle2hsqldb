@@ -161,7 +161,7 @@ public class SchemaReaderTest extends TestCase {
         assertEquals("num columns on t_libraries wrong", 2, libraryColumns.size());
         Column column1 = (Column) libraryColumns.get(0);
         Column column2 = (Column) libraryColumns.get(1);
-        assertEquals("column 1 size wrong", 0, column1.size());
+        assertEquals("column 1 size wrong", 32, column1.size());
         assertEquals("column 2 size wrong", 30, column2.size());
     }
 
@@ -197,7 +197,7 @@ public class SchemaReaderTest extends TestCase {
         Table t_libraries = schema.findTable(LIBRARY_TABLE_NAME);
         PrimaryKey pk = t_libraries.primaryKey();
         assertEquals("number of columns in pk wrong", 1, pk.columns().size());
-        assertEquals("pk name wrong", "SYS_IDX_173", pk.name());
+        assertEquals("pk name wrong", "SYS_PK_10092", pk.name());
         assertEquals("pk column name wrong", "ID", ((Column) pk.columns().get(0)).name());
     }
 
@@ -218,7 +218,7 @@ public class SchemaReaderTest extends TestCase {
     public void testUniqueKeyWithTwoColumns() {
         Table t_folks = schema.findTable("T_FOLKS");
 
-        UniqueConstraint tableUniqueKey = t_folks.findConstraint("SYS_IDX_UK_FOLKS_NAMES_224"); //hsqldb names the indexes differently from the constraints
+        UniqueConstraint tableUniqueKey = t_folks.findConstraint("SYS_IDX_UK_FOLKS_NAMES"); //hsqldb names the indexes differently from the constraints
         assertNotNull("table unique key null", tableUniqueKey);
 
         Column firstName = t_folks.findColumn("FIRST_NAME");
@@ -234,7 +234,6 @@ public class SchemaReaderTest extends TestCase {
 
         assertEquals("unique keys not the same between table and column", tableUniqueKey, uniqueKey);
 
-        assertEquals("constraint name wrong", "SYS_IDX_UK_FOLKS_NAMES_224", uniqueKey.name()); //hsqldb names the indexes differently from the constraints
         assertEquals("wrong number of columns", 2, uniqueKey.columns().size());
         assertEquals("wrong first column", firstName, uniqueKey.columns().get(0));
         assertEquals("wrong last column", lastName, uniqueKey.columns().get(1));

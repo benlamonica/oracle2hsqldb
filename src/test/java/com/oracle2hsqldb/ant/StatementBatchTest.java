@@ -22,43 +22,40 @@ package /*
 
 com.oracle2hsqldb.ant;
 
-import junit.framework.TestCase;
-import org.easymock.MockControl;
-
-
 import java.sql.SQLException;
 import java.sql.Statement;
+
+import junit.framework.TestCase;
+
+import org.easymock.EasyMock;
 
 /**
  * @author Moses Hohman
  */
 public class StatementBatchTest extends TestCase {
     private Statement statement;
-    private MockControl control;
     private StatementBatch batch;
 
     protected void setUp() throws Exception {
-        control = MockControl.createStrictControl(Statement.class);
-        statement = (Statement) control.getMock();
+        statement = EasyMock.createMock(Statement.class);
     }
 
     private static final String SQL = "SELECT 1 FROM DUAL";
 
     public void testStatementDirectlyExecutedIfBatchSizeIsOneOrLess() throws SQLException {
         batch = new StatementBatch(statement, 1);
-        statement.executeUpdate(SQL);
-        control.setReturnValue(0);
-        control.replay();
+        EasyMock.expect(statement.executeUpdate(SQL)).andReturn(0);
+        EasyMock.replay(statement);
         batch.executeUpdate(SQL);
-        control.verify();
+        EasyMock.replay(statement);
     }
 
     public void testStatementAddedToBatchIfBatchSizeNotReached() throws SQLException {
         batch = new StatementBatch(statement, 2);
         statement.addBatch(SQL);
-        control.replay();
+        EasyMock.replay(statement);
         batch.executeUpdate(SQL);
-        control.verify();
+        EasyMock.verify(statement);
     }
 
     public void testBatchExecutedIfBatchSizeReached() throws SQLException {
@@ -67,53 +64,53 @@ public class StatementBatchTest extends TestCase {
         batch = new StatementBatch(statement, 2);
         statement.addBatch(firstSql);
         statement.addBatch(secondSql);
-        control.expectAndReturn(statement.executeBatch(), new int[0]);
-        control.replay();
+        EasyMock.expect(statement.executeBatch()).andReturn(new int[0]);
+        EasyMock.replay(statement);
         batch.executeUpdate(firstSql);
         batch.executeUpdate(secondSql);
-        control.verify();
+        EasyMock.verify(statement);
     }
 
     public void testBatchCountRollsOverProperly() throws SQLException {
         batch = new StatementBatch(statement, 2);
         statement.addBatch(SQL);
         statement.addBatch(SQL);
-        control.expectAndReturn(statement.executeBatch(), new int[0]);
+        EasyMock.expect(statement.executeBatch()).andReturn(new int[0]);
         statement.addBatch(SQL);
         statement.addBatch(SQL);
-        control.expectAndReturn(statement.executeBatch(), new int[0]);
+        EasyMock.expect(statement.executeBatch()).andReturn(new int[0]);
         statement.addBatch(SQL);
-        control.replay();
+        EasyMock.replay(statement);
         batch.executeUpdate(SQL);
         batch.executeUpdate(SQL);
         batch.executeUpdate(SQL);
         batch.executeUpdate(SQL);
         batch.executeUpdate(SQL);
-        control.verify();
+        EasyMock.verify(statement);
     }
 
     public void testFlushExecutesBatchIfThereAreBatchedStatementsRegardlessOfCount() throws SQLException {
         batch = new StatementBatch(statement, 2);
         statement.addBatch(SQL);
-        control.expectAndReturn(statement.executeBatch(), new int[0]);
-        control.replay();
+        EasyMock.expect(statement.executeBatch()).andReturn(new int[0]);
+        EasyMock.replay(statement);
         batch.executeUpdate(SQL);
         batch.flush();
-        control.verify();
+        EasyMock.verify(statement);
     }
 
     public void testFlushDoesNothingIfNothingIsBatched() throws SQLException {
         batch = new StatementBatch(statement, 1);
-        control.replay();
+        EasyMock.replay(statement);
         batch.flush();
-        control.verify();
+        EasyMock.verify(statement);
     }
 
     public void testCloseClosesUnderlyingStatement() throws SQLException {
         batch = new StatementBatch(statement, 1);
         statement.close();
-        control.replay();
+        EasyMock.replay(statement);
         batch.close();
-        control.verify();
+        EasyMock.verify(statement);
     }
 }

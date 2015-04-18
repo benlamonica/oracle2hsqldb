@@ -25,12 +25,11 @@ package com.oracle2hsqldb.dialect;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,6 +39,8 @@ import javax.sql.DataSource;
 import org.apache.log4j.Logger;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowCallbackHandler;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 import com.oracle2hsqldb.Column;
 import com.oracle2hsqldb.DefaultValue;
@@ -56,8 +57,8 @@ import com.oracle2hsqldb.View;
 public class Oracle9Dialect extends GenericDialect {
     protected final Logger log = Logger.getLogger(getClass());
 
-    private static final Map TYPES_BY_NAME = new HashMap();
-    private static final Map TYPES_BY_TYPE = new HashMap();
+    private static final Map<String, Integer> TYPES_BY_NAME = new HashMap<String, Integer>();
+    private static final Map<Integer, String> TYPES_BY_TYPE = new HashMap<Integer, String>();
 
     static {
         registerType("TIMESTAMP(3)", "TIMESTAMP", Types.TIMESTAMP);
@@ -109,8 +110,9 @@ public class Oracle9Dialect extends GenericDialect {
     /**
      * performance improvement over GenericDialect's getTables()
      */
-    public Iterator getTables(DataSource dataSource, String schemaName) throws SQLException {
-        final List specs = new LinkedList();
+    @Override
+    public List<Table.Spec> getTables(DataSource dataSource, String schemaName) throws SQLException {
+        final List<Table.Spec> specs = new ArrayList<Table.Spec>();
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         jdbcTemplate.query("SELECT table_name FROM user_tables ", new RowCallbackHandler() {
 			public void processRow(ResultSet result) throws SQLException {
@@ -126,14 +128,15 @@ public class Oracle9Dialect extends GenericDialect {
                         specs.add(new View.Spec(result.getString("VIEW_NAME"), Table.Type.VIEW.getJdbcName(), result.getString("TEXT")));
                     }
                 });
-        return specs.iterator();
+        return specs;
     }
 
     /**
      * performance improvement over GenericDialect's getColumns()
      */
-    public Iterator getColumns(final DataSource dataSource, String schemaName) throws SQLException {
-        final List specs = new LinkedList();
+    @Override
+    public MultiValueMap<String, Column.Spec> getColumns(final DataSource dataSource, String schemaName, List<Table.Spec> tables) throws SQLException {
+        final MultiValueMap<String, Column.Spec> specs = new LinkedMultiValueMap<String, Column.Spec>();
         new JdbcTemplate(dataSource).query("SELECT " +
                 "column_name, " +
                 "table_name, " +
@@ -158,7 +161,7 @@ public class Oracle9Dialect extends GenericDialect {
 					int decimalDigits = columns.getInt("DECIMAL_DIGITS");
 					boolean isNullable = columns.getBoolean("NULLABLE");
 					String columnDef = columns.getString("COLUMN_DEF");
-					specs.add(new Column.Spec(tableName, new Column(columnName, dataType, columnSize,
+					specs.add(tableName, new Column.Spec(tableName, new Column(columnName, dataType, columnSize,
 							decimalDigits, isNullable, parseDefaultValue(columnDef, dataType))));
 				} catch (IllegalArgumentException e) {
 					log.error("Problems with column " + columnName + " from table name  " + tableName);
@@ -167,14 +170,15 @@ public class Oracle9Dialect extends GenericDialect {
 				}
 			}
                 });
-        return specs.iterator();
+        return specs;
     }
 
     /**
      * Superclass's implementation does not work. Seems that the Oracle 9i driver does not support DatabaseMetaData.getPrimaryKeys() well.
      */
-    public Iterator getPrimaryKeys(DataSource dataSource, String schemaName) {
-        final Map byTableName = new HashMap();
+    @Override
+    public Map<String, PrimaryKey.Spec> getPrimaryKeys(DataSource dataSource, String schemaName, List<Table.Spec> tables) {
+        final Map<String, PrimaryKey.Spec> byTableName = new HashMap<String, PrimaryKey.Spec>();
         new JdbcTemplate(dataSource).query("SELECT ucc.column_name, ucc.constraint_name, ucc.table_name " +
                 "FROM user_constraints uc INNER JOIN user_cons_columns ucc ON ucc.constraint_name=uc.constraint_name " +
                 "WHERE uc.constraint_type='P'",
@@ -185,18 +189,19 @@ public class Oracle9Dialect extends GenericDialect {
                         if (!byTableName.containsKey(tableName)) {
                             byTableName.put(tableName, new PrimaryKey.Spec(tableName, columns.getString("CONSTRAINT_NAME")));
                         }
-                        ((PrimaryKey.Spec) byTableName.get(tableName)).addColumnName(columns.getString("COLUMN_NAME"));
+                        byTableName.get(tableName).addColumnName(columns.getString("COLUMN_NAME"));
 
                     }
                 });
-        return byTableName.values().iterator();
+        return byTableName;
     }
 
     /**
      * Superclass's implementation does not work. Seems that the Oracle driver does not support DatabaseMetaData.getIndexInfo() well.
      */
-    public Iterator getUniqueKeys(DataSource dataSource, String schemaName) {
-        final List specs = new LinkedList();
+    @Override
+    public List<UniqueConstraint.Spec> getUniqueKeys(DataSource dataSource, String schemaName, List<Table.Spec> tables) {
+        final List<UniqueConstraint.Spec> specs = new ArrayList<UniqueConstraint.Spec>();
         new JdbcTemplate(dataSource).query("SELECT ucc.column_name, ucc.constraint_name, ucc.table_name " +
                 "FROM user_constraints uc INNER JOIN user_cons_columns ucc ON ucc.constraint_name=uc.constraint_name " +
                 "WHERE uc.constraint_type='U'",
@@ -209,14 +214,15 @@ public class Oracle9Dialect extends GenericDialect {
                         specs.add(new UniqueConstraint.Spec(tableName, columnName, constraintName));
                     }
                 });
-        return specs.iterator();
+        return specs;
     }
 
     /**
      * Superclass returns nothing.
      */
-    public Iterator getSequences(DataSource dataSource, String schemaName) throws SQLException {
-        final List seq = new LinkedList();
+    @Override
+    public List<Sequence> getSequences(DataSource dataSource, String schemaName) throws SQLException {
+        final List<Sequence> seq = new ArrayList<Sequence>();
         new JdbcTemplate(dataSource).query("SELECT sequence_name, last_number FROM user_sequences",
                 new RowCallbackHandler() {
                     public void processRow(ResultSet rs) throws SQLException {
@@ -226,12 +232,12 @@ public class Oracle9Dialect extends GenericDialect {
                         seq.add(new Sequence(seqName, new Long(seqValue)));
                     }
                 });
-        return seq.iterator();
+        return seq;
     }
 
     private static final String SYSDATE_STRING = "SYSDATE";
     private static final String SYSTIMESTAMP_STRING = "SYSTIMESTAMP";
-    private static final Set NOW_STRINGS = Collections.unmodifiableSet(new HashSet(Arrays.asList(new String[]{SYSDATE_STRING, SYSTIMESTAMP_STRING})));
+    private static final Set<String> NOW_STRINGS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(new String[]{SYSDATE_STRING, SYSTIMESTAMP_STRING})));
 
     public DefaultValue parseDefaultValue(String defaultValue, int type) {
         if (defaultValue != null && NOW_STRINGS.contains(defaultValue.trim())) return DefaultValue.NOW;
