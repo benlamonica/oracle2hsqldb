@@ -47,7 +47,7 @@ public class StatementBatchTest extends TestCase {
         EasyMock.expect(statement.executeUpdate(SQL)).andReturn(0);
         EasyMock.replay(statement);
         batch.executeUpdate(SQL);
-        EasyMock.replay(statement);
+        EasyMock.verify(statement);
     }
 
     public void testStatementAddedToBatchIfBatchSizeNotReached() throws SQLException {

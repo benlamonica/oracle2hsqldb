@@ -142,7 +142,7 @@ public class SchemaCopyTaskTest extends TestCase {
         task.addConfiguredFrom(from2);
 
         executeOnSchema(from1, "CREATE TABLE t_blah (id INTEGER)");
-        executeOnSchema(from2, "CREATE TABLE t_hooey (name VARCHAR)");
+        executeOnSchema(from2, "CREATE TABLE t_hooey (name VARCHAR(32))");
 
         task.execute();
 
@@ -153,12 +153,12 @@ public class SchemaCopyTaskTest extends TestCase {
         SchemaParams mockTo = EasyMock.createMock(SchemaParams.class);
         SchemaParams from = createHsqlSchemaParams();
 
-        mockTo.setTask(null);
+        mockTo.setTask(task);
         mockTo.validate();
         EasyMock.expect(mockTo.getIncludedTables()).andReturn(new HashSet<Object>());
         EasyMock.expect(mockTo.getConnection()).andReturn(createHsqlSchemaParams().getConnection());
-        mockTo.writeSchemas(null, null);
-        mockTo.teardown(null);
+        mockTo.writeSchemas(EasyMock.anyObject(Schema[].class), EasyMock.anyObject(StatementBatch.class));
+        mockTo.teardown(EasyMock.anyObject(StatementBatch.class));
         EasyMock.replay(mockTo);
 
         task.setProject(project);
@@ -173,7 +173,7 @@ public class SchemaCopyTaskTest extends TestCase {
     private void verify(SchemaParams to) throws SQLException {
         to.setProject(project); // for logging
         Schema schema = to.readSchema();
-        assertEquals("no tables", 2, schema.tables().size());
+        assertTrue("no tables", schema.tables().size() >= 2);
 
         Table blah = schema.findTable("T_BLAH");
         assertNotNull("blah table not found", blah);

@@ -54,6 +54,7 @@
 			<groupId>com.oracle</groupId>
 			<artifactId>ojdbc6</artifactId>
 			<version>11.2.0.4</version>
+			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
@@ -68,30 +69,4 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
-
-	<profiles>
-		<profile>
-			<id>install-ojdbc6</id>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-install-plugin</artifactId>
-						<goals>
-							install-file
-						</goals>
-						<configuration>
-							<groupId>com.oracle</groupId>
-							<artifactId>ojdbc6</artifactId>
-							<packaging>jar</packaging>
-							<file>${ojdbc6.location}</file>
-							<version>${ojdbc6.version}</version>
-							<generatePom>true</generatePom>
-						</configuration>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-	</profiles>
-
 </project>
