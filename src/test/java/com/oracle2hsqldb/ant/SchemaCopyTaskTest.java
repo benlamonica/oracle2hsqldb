@@ -210,7 +210,7 @@ public class SchemaCopyTaskTest extends TestCase {
 
     private static String getTempHsqlFileUri() throws IOException {
         File tempFile = File.createTempFile("hsqltest", "");
-        return new StringBuffer("jdbc:hsqldb:file:").append(tempFile.getAbsolutePath()).toString();
+        return new StringBuffer("jdbc:hsqldb:file:/").append(tempFile.getAbsolutePath().replace('\\', '/')).toString();
     }
 
     private SchemaParams createHsqlSchemaParams(String alias) throws URISyntaxException {
