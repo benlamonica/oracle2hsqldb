@@ -155,7 +155,7 @@ public class SchemaCopyTaskTest extends TestCase {
 
         mockTo.setTask(task);
         mockTo.validate();
-        EasyMock.expect(mockTo.getIncludedTables()).andReturn(new HashSet<Object>());
+        EasyMock.expect(mockTo.getIncludedTables()).andReturn(new HashSet<String>());
         EasyMock.expect(mockTo.getConnection()).andReturn(createHsqlSchemaParams().getConnection());
         mockTo.writeSchemas(EasyMock.anyObject(Schema[].class), EasyMock.anyObject(StatementBatch.class));
         mockTo.teardown(EasyMock.anyObject(StatementBatch.class));

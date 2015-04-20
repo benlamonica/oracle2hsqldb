@@ -112,23 +112,27 @@ public class Oracle9Dialect extends GenericDialect {
      */
     @Override
     public List<Table.Spec> getTables(DataSource dataSource, String schemaName) throws SQLException {
-        final List<Table.Spec> specs = new ArrayList<Table.Spec>();
-        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-        jdbcTemplate.query("SELECT table_name FROM user_tables ", new RowCallbackHandler() {
-			public void processRow(ResultSet result) throws SQLException {
-				if (!"TOAD_PLAN_TABLE".equals(result.getString("TABLE_NAME"))) {
-					specs.add(new Table.Spec(result.getString("TABLE_NAME"), Table.Type.TABLE
-							.getJdbcName()));
+    	if (isSchemaInfoAccessible()) {
+            final List<Table.Spec> specs = new ArrayList<Table.Spec>();
+	        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+	        jdbcTemplate.query("SELECT table_name FROM user_tables ", new RowCallbackHandler() {
+				public void processRow(ResultSet result) throws SQLException {
+					if (!"TOAD_PLAN_TABLE".equals(result.getString("TABLE_NAME"))) {
+						specs.add(new Table.Spec(result.getString("TABLE_NAME"), Table.Type.TABLE
+								.getJdbcName()));
+					}
 				}
-			}
-		});
-        jdbcTemplate.query("SELECT view_name, text FROM user_views",
-                new RowCallbackHandler() {
-                    public void processRow(ResultSet result) throws SQLException {
-                        specs.add(new View.Spec(result.getString("VIEW_NAME"), Table.Type.VIEW.getJdbcName(), result.getString("TEXT")));
-                    }
-                });
-        return specs;
+			});
+	        jdbcTemplate.query("SELECT view_name, text FROM user_views",
+	                new RowCallbackHandler() {
+	                    public void processRow(ResultSet result) throws SQLException {
+	                        specs.add(new View.Spec(result.getString("VIEW_NAME"), Table.Type.VIEW.getJdbcName(), result.getString("TEXT")));
+	                    }
+	                });
+	        return specs;
+    	} else {
+    		return super.getTables(dataSource, schemaName);
+    	}
     }
 
     /**
@@ -136,41 +140,45 @@ public class Oracle9Dialect extends GenericDialect {
      */
     @Override
     public MultiValueMap<String, Column.Spec> getColumns(final DataSource dataSource, String schemaName, List<Table.Spec> tables) throws SQLException {
-        final MultiValueMap<String, Column.Spec> specs = new LinkedMultiValueMap<String, Column.Spec>();
-        new JdbcTemplate(dataSource).query("SELECT " +
-                "column_name, " +
-                "table_name, " +
-                "data_type, " +
-                "NVL(data_precision, data_length) AS column_size," +
-                "data_scale AS decimal_digits," +
-                "DECODE(nullable, 'Y', 1, 0) AS nullable," +
-                "data_default AS column_def " +
-                "FROM user_tab_columns",
-                new RowCallbackHandler() {
-                    public void processRow(ResultSet columns) throws SQLException {
-				// retrieve values ahead of time, otherwise you get a stream
-				// closed error from Oracle
-				String columnName = columns.getString("COLUMN_NAME");
-				if (log.isDebugEnabled())
-					log.debug("Reading column " + columnName);
-				String tableName = columns.getString("TABLE_NAME");
-				try {
-					int dataType = getType(columns.getString("DATA_TYPE"));
-					
-					int columnSize = columns.getInt("COLUMN_SIZE");
-					int decimalDigits = columns.getInt("DECIMAL_DIGITS");
-					boolean isNullable = columns.getBoolean("NULLABLE");
-					String columnDef = columns.getString("COLUMN_DEF");
-					specs.add(tableName, new Column.Spec(tableName, new Column(columnName, dataType, columnSize,
-							decimalDigits, isNullable, parseDefaultValue(columnDef, dataType))));
-				} catch (IllegalArgumentException e) {
-					log.error("Problems with column " + columnName + " from table name  " + tableName);
-					throw new SQLException("Problems with column " + columnName + " from table "
-							+ tableName, e);
+    	if (isSchemaInfoAccessible()) {
+	        final MultiValueMap<String, Column.Spec> specs = new LinkedMultiValueMap<String, Column.Spec>();
+	        new JdbcTemplate(dataSource).query("SELECT " +
+	                "column_name, " +
+	                "table_name, " +
+	                "data_type, " +
+	                "NVL(data_precision, data_length) AS column_size," +
+	                "data_scale AS decimal_digits," +
+	                "DECODE(nullable, 'Y', 1, 0) AS nullable," +
+	                "data_default AS column_def " +
+	                "FROM user_tab_columns",
+	                new RowCallbackHandler() {
+	                    public void processRow(ResultSet columns) throws SQLException {
+					// retrieve values ahead of time, otherwise you get a stream
+					// closed error from Oracle
+					String columnName = columns.getString("COLUMN_NAME");
+					if (log.isDebugEnabled())
+						log.debug("Reading column " + columnName);
+					String tableName = columns.getString("TABLE_NAME");
+					try {
+						int dataType = getType(columns.getString("DATA_TYPE"));
+						
+						int columnSize = columns.getInt("COLUMN_SIZE");
+						int decimalDigits = columns.getInt("DECIMAL_DIGITS");
+						boolean isNullable = columns.getBoolean("NULLABLE");
+						String columnDef = columns.getString("COLUMN_DEF");
+						specs.add(tableName, new Column.Spec(tableName, new Column(columnName, dataType, columnSize,
+								decimalDigits, isNullable, parseDefaultValue(columnDef, dataType))));
+					} catch (IllegalArgumentException e) {
+						log.error("Problems with column " + columnName + " from table name  " + tableName);
+						throw new SQLException("Problems with column " + columnName + " from table "
+								+ tableName, e);
+					}
 				}
-			}
-                });
-        return specs;
+	                });
+	        return specs;
+    	} else {
+    		return super.getColumns(dataSource, schemaName, tables);
+    	}
     }
 
     /**
@@ -178,22 +186,26 @@ public class Oracle9Dialect extends GenericDialect {
      */
     @Override
     public Map<String, PrimaryKey.Spec> getPrimaryKeys(DataSource dataSource, String schemaName, List<Table.Spec> tables) {
-        final Map<String, PrimaryKey.Spec> byTableName = new HashMap<String, PrimaryKey.Spec>();
-        new JdbcTemplate(dataSource).query("SELECT ucc.column_name, ucc.constraint_name, ucc.table_name " +
-                "FROM user_constraints uc INNER JOIN user_cons_columns ucc ON ucc.constraint_name=uc.constraint_name " +
-                "WHERE uc.constraint_type='P'",
-                new RowCallbackHandler() {
-                    public void processRow(ResultSet columns) throws SQLException {
-                        if (log.isDebugEnabled()) log.debug("Reading primary key:column " + columns.getString("CONSTRAINT_NAME") + ":" + columns.getString("COLUMN_NAME"));
-                        String tableName = columns.getString("TABLE_NAME");
-                        if (!byTableName.containsKey(tableName)) {
-                            byTableName.put(tableName, new PrimaryKey.Spec(tableName, columns.getString("CONSTRAINT_NAME")));
-                        }
-                        byTableName.get(tableName).addColumnName(columns.getString("COLUMN_NAME"));
-
-                    }
-                });
-        return byTableName;
+    	if (isSchemaInfoAccessible()) {
+	        final Map<String, PrimaryKey.Spec> byTableName = new HashMap<String, PrimaryKey.Spec>();
+	        new JdbcTemplate(dataSource).query("SELECT ucc.column_name, ucc.constraint_name, ucc.table_name " +
+	                "FROM user_constraints uc INNER JOIN user_cons_columns ucc ON ucc.constraint_name=uc.constraint_name " +
+	                "WHERE uc.constraint_type='P'",
+	                new RowCallbackHandler() {
+	                    public void processRow(ResultSet columns) throws SQLException {
+	                        if (log.isDebugEnabled()) log.debug("Reading primary key:column " + columns.getString("CONSTRAINT_NAME") + ":" + columns.getString("COLUMN_NAME"));
+	                        String tableName = columns.getString("TABLE_NAME");
+	                        if (!byTableName.containsKey(tableName)) {
+	                            byTableName.put(tableName, new PrimaryKey.Spec(tableName, columns.getString("CONSTRAINT_NAME")));
+	                        }
+	                        byTableName.get(tableName).addColumnName(columns.getString("COLUMN_NAME"));
+	
+	                    }
+	                });
+	        return byTableName;
+    	} else {
+    		return super.getPrimaryKeys(dataSource, schemaName, tables);
+    	}
     }
 
     /**
@@ -201,20 +213,24 @@ public class Oracle9Dialect extends GenericDialect {
      */
     @Override
     public List<UniqueConstraint.Spec> getUniqueKeys(DataSource dataSource, String schemaName, List<Table.Spec> tables) {
-        final List<UniqueConstraint.Spec> specs = new ArrayList<UniqueConstraint.Spec>();
-        new JdbcTemplate(dataSource).query("SELECT ucc.column_name, ucc.constraint_name, ucc.table_name " +
-                "FROM user_constraints uc INNER JOIN user_cons_columns ucc ON ucc.constraint_name=uc.constraint_name " +
-                "WHERE uc.constraint_type='U'",
-                new RowCallbackHandler() {
-                    public void processRow(ResultSet columns) throws SQLException {
-                        String columnName = columns.getString("COLUMN_NAME");
-                        String tableName = columns.getString("TABLE_NAME");
-                        String constraintName = columns.getString("CONSTRAINT_NAME");
-                        if (log.isDebugEnabled()) log.debug("Reading unique constraint:column " + constraintName + ":" + columnName);
-                        specs.add(new UniqueConstraint.Spec(tableName, columnName, constraintName));
-                    }
-                });
-        return specs;
+    	if (isSchemaInfoAccessible()) {
+	        final List<UniqueConstraint.Spec> specs = new ArrayList<UniqueConstraint.Spec>();
+	        new JdbcTemplate(dataSource).query("SELECT ucc.column_name, ucc.constraint_name, ucc.table_name " +
+	                "FROM user_constraints uc INNER JOIN user_cons_columns ucc ON ucc.constraint_name=uc.constraint_name " +
+	                "WHERE uc.constraint_type='U'",
+	                new RowCallbackHandler() {
+	                    public void processRow(ResultSet columns) throws SQLException {
+	                        String columnName = columns.getString("COLUMN_NAME");
+	                        String tableName = columns.getString("TABLE_NAME");
+	                        String constraintName = columns.getString("CONSTRAINT_NAME");
+	                        if (log.isDebugEnabled()) log.debug("Reading unique constraint:column " + constraintName + ":" + columnName);
+	                        specs.add(new UniqueConstraint.Spec(tableName, columnName, constraintName));
+	                    }
+	                });
+	        return specs;
+    	} else {
+    		return super.getUniqueKeys(dataSource, schemaName, tables);
+    	}
     }
 
     /**
@@ -222,17 +238,21 @@ public class Oracle9Dialect extends GenericDialect {
      */
     @Override
     public List<Sequence> getSequences(DataSource dataSource, String schemaName) throws SQLException {
-        final List<Sequence> seq = new ArrayList<Sequence>();
-        new JdbcTemplate(dataSource).query("SELECT sequence_name, last_number FROM user_sequences",
-                new RowCallbackHandler() {
-                    public void processRow(ResultSet rs) throws SQLException {
-                        String seqName = rs.getString("SEQUENCE_NAME");
-                        long seqValue = rs.getLong("LAST_NUMBER");
-                        if (log.isDebugEnabled()) log.debug("Reading sequence " + seqName + "; currval=" + seqValue);
-                        seq.add(new Sequence(seqName, new Long(seqValue)));
-                    }
-                });
-        return seq;
+    	if (isSchemaInfoAccessible()) {
+	        final List<Sequence> seq = new ArrayList<Sequence>();
+	        new JdbcTemplate(dataSource).query("SELECT sequence_name, last_number FROM user_sequences",
+	                new RowCallbackHandler() {
+	                    public void processRow(ResultSet rs) throws SQLException {
+	                        String seqName = rs.getString("SEQUENCE_NAME");
+	                        long seqValue = rs.getLong("LAST_NUMBER");
+	                        if (log.isDebugEnabled()) log.debug("Reading sequence " + seqName + "; currval=" + seqValue);
+	                        seq.add(new Sequence(seqName, new Long(seqValue)));
+	                    }
+	                });
+	        return seq;
+    	} else {
+    		return super.getSequences(dataSource, schemaName);
+    	}
     }
 
     private static final String SYSDATE_STRING = "SYSDATE";

@@ -79,7 +79,19 @@ public class GenericDialect implements Dialect {
         registerType("TIMESTAMP", Types.TIMESTAMP);
     }
 
-    public int getType(String dataTypeName) {
+    private boolean schemaInfoAccessible = true;
+    
+    @Override
+	public boolean isSchemaInfoAccessible() {
+		return schemaInfoAccessible;
+	}
+
+	@Override
+	public void setSchemaInfoAccessible(boolean schemaInfoAccessible) {
+		this.schemaInfoAccessible = schemaInfoAccessible;
+	}
+
+	public int getType(String dataTypeName) {
         if (!TYPES_BY_NAME.containsKey(dataTypeName)) throw new IllegalArgumentException("No registered type for name " + dataTypeName);
         return ((Integer) TYPES_BY_NAME.get(dataTypeName)).intValue();
     }

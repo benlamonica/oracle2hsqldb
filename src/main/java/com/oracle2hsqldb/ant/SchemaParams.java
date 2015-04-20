@@ -22,6 +22,17 @@
 
 package com.oracle2hsqldb.ant;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Task;
@@ -37,13 +48,6 @@ import com.oracle2hsqldb.dialect.Dialect;
 import com.oracle2hsqldb.dialect.HSQLDialect;
 import com.oracle2hsqldb.dialect.Oracle9Dialect;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.util.*;
-
 /**
  * @author Moses Hohman
  */
@@ -54,15 +58,16 @@ public class SchemaParams implements Validatable, TableFilter {
     private Dialect dialect;
     private String username;
     private String schema;
+    private boolean schemaInfoAccessible = true;
     private boolean copyPrimaryKeys = true;
     private boolean copyForeignKeys = false;
     private boolean copySequences = false;
     private boolean viewsAsTables = false;
     private transient String password;
-    private Set includedTables = new HashSet();
-    private Set excludedTables = new HashSet();
+    private Set<String> includedTables = new HashSet<String>();
+    private Set<String> excludedTables = new HashSet<String>();
 
-    private static Map dialects = new HashMap();
+    private static Map<String, Dialect> dialects = new HashMap<String, Dialect>();
 
     static {
         register("jdbc:oracle", new Oracle9Dialect());
@@ -99,15 +104,15 @@ public class SchemaParams implements Validatable, TableFilter {
         writer.setViewsAsTables(viewsAsTables);
         for (int i = 0; i < schemas.length; i++) {
             log("writing schema " + schemas[i].name());
-            for (Iterator tables = schemas[i].tables().iterator(); tables.hasNext();) {
-                Table table = (Table) tables.next();
+            for (Iterator<Table> tables = schemas[i].tables().iterator(); tables.hasNext();) {
+                Table table = tables.next();
                 log("writing table: " + table.name() + "\n" + writer.write(table), Project.MSG_VERBOSE);
                 statement.executeUpdate(writer.write(table));
             }
             if (copySequences) {
                 log("WRITING SEQUENCES", Project.MSG_VERBOSE);
-                for (Iterator sequences = schemas[i].sequences().iterator(); sequences.hasNext();) {
-                    Sequence sequence = (Sequence) sequences.next();
+                for (Iterator<Sequence> sequences = schemas[i].sequences().iterator(); sequences.hasNext();) {
+                    Sequence sequence = sequences.next();
                     log("writing sequence: " + sequence.name() + "\n" + writer.write(sequence), Project.MSG_VERBOSE);
                     statement.executeUpdate(writer.write(sequence));
                 }
@@ -155,14 +160,19 @@ public class SchemaParams implements Validatable, TableFilter {
         return dialect;
     }
 
-    //TODO: make this private, but still testable somehow
-    public Configuration getConfiguration() {
+    Configuration getConfiguration() {
         return new Configuration(copyPrimaryKeys, copyForeignKeys, copySequences, dialect);
     }
 
     private void loadDialect() {
-        dialect = (Dialect) dialects.get(getJdbcPrefix());
+		try {
+			dialect = dialects.get(getJdbcPrefix()).getClass().newInstance();
+		} catch (Exception e) {
+			// unable to instantiate our own instance of the dialect, so I guess use the shared one.
+			dialect = dialects.get(getJdbcPrefix());
+		}
         if (dialect == null) throw new BuildException("Dialect not supported: " + getJdbcPrefix());
+        dialect.setSchemaInfoAccessible(schemaInfoAccessible);
         ensureDriverLoaded(dialect);
     }
 
@@ -251,11 +261,19 @@ public class SchemaParams implements Validatable, TableFilter {
         this.copySequences = copySequences;
     }
 
-    public Set getIncludedTables() {
+    public boolean isSchemaInfoAccessible() {
+		return schemaInfoAccessible;
+	}
+
+	public void setSchemaInfoAccessible(boolean schemaInfoAccessible) {
+		this.schemaInfoAccessible = schemaInfoAccessible;
+	}
+
+	public Set<String> getIncludedTables() {
         return includedTables;
     }
 
-    public Set getExcludedTables() {
+    public Set<String> getExcludedTables() {
         return excludedTables;
     }
 }

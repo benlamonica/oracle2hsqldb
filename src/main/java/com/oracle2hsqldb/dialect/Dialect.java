@@ -52,7 +52,7 @@ public interface Dialect {
     boolean supportsViews();
 
     boolean supportsSequences();
-
+    
     String getIdentityColumnString();
 
     List<Table.Spec> getTables(DataSource dataSource, String schemaName) throws SQLException;
@@ -82,4 +82,8 @@ public interface Dialect {
     String getShutdownSql();
 
     String getNextSequenceValueSql(String sequenceName);
+
+	public void setSchemaInfoAccessible(boolean schemaInfoAccessible);
+
+	public boolean isSchemaInfoAccessible();
 }

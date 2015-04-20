@@ -48,9 +48,9 @@
 			<groupId>org.apache.ant</groupId>
 			<artifactId>ant</artifactId>
 			<version>1.8.1</version>
-			<scope>provided</scope>
 		</dependency>
 		<dependency>
+			<!-- you will need to provide your own oracle jar. -->
 			<groupId>com.oracle</groupId>
 			<artifactId>ojdbc6</artifactId>
 			<version>11.2.0.4</version>
