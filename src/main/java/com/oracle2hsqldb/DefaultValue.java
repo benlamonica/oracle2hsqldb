@@ -36,6 +36,10 @@ public class DefaultValue {
     private boolean isString;
 
     public DefaultValue(String value, boolean isString) {
+    	if (value != null) {
+	    	value = value.replace("('", "'");
+	    	value = value.replace("')", "'");
+	    }
         this.value = value;
         this.isString = isString;
     }
