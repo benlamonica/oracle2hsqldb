@@ -36,6 +36,7 @@ import com.oracle2hsqldb.DefaultValue;
 import com.oracle2hsqldb.PrimaryKey;
 import com.oracle2hsqldb.Sequence;
 import com.oracle2hsqldb.Table;
+import com.oracle2hsqldb.TableFilter;
 import com.oracle2hsqldb.UniqueConstraint;
 
 /**
@@ -55,7 +56,7 @@ public interface Dialect {
     
     String getIdentityColumnString();
 
-    List<Table.Spec> getTables(DataSource dataSource, String schemaName) throws SQLException;
+    List<Table.Spec> getTables(DataSource dataSource, String schemaName, TableFilter filter) throws SQLException;
 
     MultiValueMap<String, Column.Spec> getColumns(DataSource dataSource, String schemaName, List<Table.Spec> tables) throws SQLException;
 

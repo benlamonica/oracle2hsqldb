@@ -47,6 +47,7 @@ import com.oracle2hsqldb.DefaultValue;
 import com.oracle2hsqldb.PrimaryKey;
 import com.oracle2hsqldb.Sequence;
 import com.oracle2hsqldb.Table;
+import com.oracle2hsqldb.TableFilter;
 import com.oracle2hsqldb.UniqueConstraint;
 import com.oracle2hsqldb.View;
 
@@ -111,27 +112,32 @@ public class Oracle9Dialect extends GenericDialect {
      * performance improvement over GenericDialect's getTables()
      */
     @Override
-    public List<Table.Spec> getTables(DataSource dataSource, String schemaName) throws SQLException {
+    public List<Table.Spec> getTables(DataSource dataSource, String schemaName, final TableFilter filter) throws SQLException {
     	if (isSchemaInfoAccessible()) {
             final List<Table.Spec> specs = new ArrayList<Table.Spec>();
 	        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
 	        jdbcTemplate.query("SELECT table_name FROM user_tables ", new RowCallbackHandler() {
 				public void processRow(ResultSet result) throws SQLException {
 					if (!"TOAD_PLAN_TABLE".equals(result.getString("TABLE_NAME"))) {
-						specs.add(new Table.Spec(result.getString("TABLE_NAME"), Table.Type.TABLE
-								.getJdbcName()));
+						Table.Spec table = new Table.Spec(result.getString("TABLE_NAME"), Table.Type.TABLE.getJdbcName());
+						if (filter == null || (filter != null && filter.accept(table.getTable()))) {
+							specs.add(table);
+						}
 					}
 				}
 			});
 	        jdbcTemplate.query("SELECT view_name, text FROM user_views",
 	                new RowCallbackHandler() {
 	                    public void processRow(ResultSet result) throws SQLException {
-	                        specs.add(new View.Spec(result.getString("VIEW_NAME"), Table.Type.VIEW.getJdbcName(), result.getString("TEXT")));
+	                    	View.Spec view = new View.Spec(result.getString("VIEW_NAME"), Table.Type.VIEW.getJdbcName(), result.getString("TEXT"));
+							if (filter == null || (filter != null && filter.accept(view.getTable()))) {
+		                        specs.add(view);
+							}
 	                    }
 	                });
 	        return specs;
     	} else {
-    		return super.getTables(dataSource, schemaName);
+    		return super.getTables(dataSource, schemaName, filter);
     	}
     }
 

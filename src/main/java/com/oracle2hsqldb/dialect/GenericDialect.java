@@ -45,6 +45,7 @@ import com.oracle2hsqldb.PrimaryKey;
 import com.oracle2hsqldb.SchemaException;
 import com.oracle2hsqldb.Sequence;
 import com.oracle2hsqldb.Table;
+import com.oracle2hsqldb.TableFilter;
 import com.oracle2hsqldb.UniqueConstraint;
 import com.oracle2hsqldb.spring.MetaDataJdbcTemplate;
 
@@ -111,7 +112,7 @@ public class GenericDialect implements Dialect {
     }
 
     @Override
-    public List<Table.Spec> getTables(DataSource dataSource, final String schemaName) throws SQLException {
+    public List<Table.Spec> getTables(DataSource dataSource, final String schemaName, final TableFilter filter) throws SQLException {
         final List<Table.Spec> result = new ArrayList<Table.Spec>();
         MetaDataJdbcTemplate template = new MetaDataJdbcTemplate(dataSource) {
             protected ResultSet getResults(DatabaseMetaData metaData) throws SQLException {
@@ -120,7 +121,10 @@ public class GenericDialect implements Dialect {
         };
         template.query(new RowCallbackHandler() {
             public void processRow(ResultSet tables) throws SQLException {
-                result.add(new Table.Spec(tables.getString("TABLE_NAME"), tables.getString("TABLE_TYPE")));
+            	Table.Spec spec = new Table.Spec(tables.getString("TABLE_NAME"), tables.getString("TABLE_TYPE"));
+            	if (filter == null || (filter != null && filter.accept(spec.getTable()))) {
+                    result.add(spec);
+            	}
             }
         });
         return result;

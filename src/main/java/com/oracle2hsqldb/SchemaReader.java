@@ -69,14 +69,10 @@ public class SchemaReader {
         Schema schema = new Schema(schemaName);
 
         log.info("Reading tables ...");
-        List<Table.Spec> tables = configuration().dialect().getTables(dataSource, schemaName);
+        List<Table.Spec> tables = configuration().dialect().getTables(dataSource, schemaName, filter);
         for (Table.Spec spec : tables) {
-            if (filter.accept(spec.getTable())) {
-                log.debug("Accepted table " + spec.getTableName());
-                schema.addTable(spec.getTable());
-            } else {
-                log.debug("Skipped table " + spec.getTableName());
-            }
+            log.debug("Accepted table " + spec.getTableName());
+            schema.addTable(spec.getTable());
         }
 
         log.info("Reading columns ...");
