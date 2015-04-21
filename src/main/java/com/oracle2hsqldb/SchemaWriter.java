@@ -39,6 +39,12 @@ public class SchemaWriter {
         this.viewsAsTables = viewsAsTables;
     }
 
+    public String write(Schema schema) {
+    	StringBuilder result = new StringBuilder("CREATE SCHEMA ").append(schema.name()).append(" AUTHORIZATION DBA\n");
+    	result.append("SET SCHEMA ").append(schema.name()).append("\n");
+    	return result.toString();
+    }
+    
     public String write(Table table) {
         if (!viewsAsTables && table instanceof View && configuration.dialect().supportsViews()) {
             return createView((View) table);
@@ -46,7 +52,7 @@ public class SchemaWriter {
             return createTable(table);
         }
     }
-
+    
     private String createTable(Table table) {
         StringBuffer result = new StringBuffer("CREATE TABLE ").append(table.name()).append(" (\n");
         for (Iterator columns = table.columns().iterator(); columns.hasNext();) {
