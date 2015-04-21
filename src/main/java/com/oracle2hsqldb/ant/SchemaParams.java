@@ -104,7 +104,7 @@ public class SchemaParams implements Validatable, TableFilter {
         writer.setViewsAsTables(viewsAsTables);
         for (int i = 0; i < schemas.length; i++) {
             log("writing schema " + schemas[i].name());
-            writer.write(schemas[i]);
+            statement.executeUpdate(writer.write(schemas[i]));
             for (Iterator<Table> tables = schemas[i].tables().iterator(); tables.hasNext();) {
                 Table table = tables.next();
                 log("writing table: " + table.name() + "\n" + writer.write(table), Project.MSG_VERBOSE);
