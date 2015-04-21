@@ -40,11 +40,13 @@ public class SchemaWriter {
     }
 
     public String write(Schema schema) {
-    	StringBuilder result = new StringBuilder("CREATE SCHEMA ").append(schema.name()).append(" AUTHORIZATION DBA\n");
-    	result.append("SET SCHEMA ").append(schema.name()).append("\n");
-    	return result.toString();
+    	return "CREATE SCHEMA " + schema.name() + " AUTHORIZATION DBA\n";
     }
-    
+
+    public String switchToSchema(Schema schema) {
+    	return "SET SCHEMA " + schema.name() + "\n";
+    }
+
     public String write(Table table) {
         if (!viewsAsTables && table instanceof View && configuration.dialect().supportsViews()) {
             return createView((View) table);
