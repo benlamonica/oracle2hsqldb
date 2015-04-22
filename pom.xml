@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>oracle2hsqldb</groupId>
 	<artifactId>oracle2hsqldb</artifactId>
-	<version>1.0-SNAPSHOT</version>
+	<version>1.0</version>
 	<name>Oracle To HSQLDB</name>
 	<description>exports the table structure from oracle to hsqldb</description>
 	<url>https://github.com/benlamonica/oracle2hsqldb</url>
