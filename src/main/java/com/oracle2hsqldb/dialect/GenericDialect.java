@@ -41,12 +41,12 @@ import org.springframework.util.MultiValueMap;
 
 import com.oracle2hsqldb.Column;
 import com.oracle2hsqldb.DefaultValue;
+import com.oracle2hsqldb.Index;
 import com.oracle2hsqldb.PrimaryKey;
 import com.oracle2hsqldb.SchemaException;
 import com.oracle2hsqldb.Sequence;
 import com.oracle2hsqldb.Table;
 import com.oracle2hsqldb.TableFilter;
-import com.oracle2hsqldb.UniqueConstraint;
 import com.oracle2hsqldb.spring.MetaDataJdbcTemplate;
 
 /**
@@ -179,8 +179,8 @@ public class GenericDialect implements Dialect {
     }
 
     @Override
-    public List<UniqueConstraint.Spec> getUniqueKeys(DataSource dataSource, final String schemaName, List<Table.Spec> tables) {
-        final List<UniqueConstraint.Spec> result = new ArrayList<UniqueConstraint.Spec>();
+    public List<Index.Spec> getUniqueKeys(DataSource dataSource, final String schemaName, List<Table.Spec> tables) {
+        final List<Index.Spec> result = new ArrayList<Index.Spec>();
         for (final Table.Spec table : tables) {
 	        MetaDataJdbcTemplate template = new MetaDataJdbcTemplate(dataSource) {
 	            protected ResultSet getResults(DatabaseMetaData metaData) throws SQLException {
@@ -190,13 +190,10 @@ public class GenericDialect implements Dialect {
 	        template.query(new RowCallbackHandler() {
 	            public void processRow(ResultSet uniqueIndexes) throws SQLException {
 	                boolean isNonUnique = uniqueIndexes.getBoolean("NON_UNIQUE");
-	                if (!isNonUnique) {
-	                    String columnName = uniqueIndexes.getString("COLUMN_NAME");
-	                    String constraintName = uniqueIndexes.getString("INDEX_NAME");
-	                    String tableName = uniqueIndexes.getString("TABLE_NAME");
-	
-	                    result.add(new UniqueConstraint.Spec(tableName, columnName, constraintName));
-	                }
+                    String columnName = uniqueIndexes.getString("COLUMN_NAME");
+                    String constraintName = uniqueIndexes.getString("INDEX_NAME");
+                    String tableName = uniqueIndexes.getString("TABLE_NAME");
+	                result.add(new Index.Spec(tableName, columnName, constraintName, !isNonUnique));
 	            }
 	        });
         }

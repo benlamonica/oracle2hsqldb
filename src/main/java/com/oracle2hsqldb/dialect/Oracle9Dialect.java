@@ -48,7 +48,6 @@ import com.oracle2hsqldb.PrimaryKey;
 import com.oracle2hsqldb.Sequence;
 import com.oracle2hsqldb.Table;
 import com.oracle2hsqldb.TableFilter;
-import com.oracle2hsqldb.UniqueConstraint;
 import com.oracle2hsqldb.View;
 
 
@@ -211,31 +210,6 @@ public class Oracle9Dialect extends GenericDialect {
 	        return byTableName;
     	} else {
     		return super.getPrimaryKeys(dataSource, schemaName, tables);
-    	}
-    }
-
-    /**
-     * Superclass's implementation does not work. Seems that the Oracle driver does not support DatabaseMetaData.getIndexInfo() well.
-     */
-    @Override
-    public List<UniqueConstraint.Spec> getUniqueKeys(DataSource dataSource, String schemaName, List<Table.Spec> tables) {
-    	if (isSchemaInfoAccessible()) {
-	        final List<UniqueConstraint.Spec> specs = new ArrayList<UniqueConstraint.Spec>();
-	        new JdbcTemplate(dataSource).query("SELECT ucc.column_name, ucc.constraint_name, ucc.table_name " +
-	                "FROM user_constraints uc INNER JOIN user_cons_columns ucc ON ucc.constraint_name=uc.constraint_name " +
-	                "WHERE uc.constraint_type='U'",
-	                new RowCallbackHandler() {
-	                    public void processRow(ResultSet columns) throws SQLException {
-	                        String columnName = columns.getString("COLUMN_NAME");
-	                        String tableName = columns.getString("TABLE_NAME");
-	                        String constraintName = columns.getString("CONSTRAINT_NAME");
-	                        if (log.isDebugEnabled()) log.debug("Reading unique constraint:column " + constraintName + ":" + columnName);
-	                        specs.add(new UniqueConstraint.Spec(tableName, columnName, constraintName));
-	                    }
-	                });
-	        return specs;
-    	} else {
-    		return super.getUniqueKeys(dataSource, schemaName, tables);
     	}
     }
 

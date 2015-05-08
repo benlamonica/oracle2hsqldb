@@ -37,7 +37,7 @@ import com.oracle2hsqldb.PrimaryKey;
 import com.oracle2hsqldb.Sequence;
 import com.oracle2hsqldb.Table;
 import com.oracle2hsqldb.TableFilter;
-import com.oracle2hsqldb.UniqueConstraint;
+import com.oracle2hsqldb.Index;
 
 /**
  * @author Moses Hohman
@@ -64,7 +64,7 @@ public interface Dialect {
 
     Map<String, PrimaryKey.Spec> getPrimaryKeys(DataSource dataSource, String schemaName, List<Table.Spec> tables);
 
-    List<UniqueConstraint.Spec> getUniqueKeys(DataSource dataSource, String schemaName, List<Table.Spec> tables);
+    List<Index.Spec> getUniqueKeys(DataSource dataSource, String schemaName, List<Table.Spec> tables);
 
     int getType(String dataTypeName);
 

@@ -25,7 +25,7 @@ package com.oracle2hsqldb;
 import com.oracle2hsqldb.Column;
 import com.oracle2hsqldb.PrimaryKey;
 import com.oracle2hsqldb.Table;
-import com.oracle2hsqldb.UniqueConstraint;
+import com.oracle2hsqldb.Index;
 
 import junit.framework.TestCase;
 
@@ -69,15 +69,15 @@ public class ColumnTest extends TestCase {
         assertFalse("is key", column.isPrimaryKey());
     }
 
-    public void testConstrainBy() {
+    public void testIndexBy() {
         Column column = new Column("id", 1, 0, 0, false);
         Table table = new Table("t", Table.Type.TABLE);
         table.addColumn(column);
 
-        UniqueConstraint constraint = new UniqueConstraint("uk");
-        column.constrainBy(constraint);
+        Index constraint = new Index("uk", true);
+        column.indexedBy(constraint);
 
-        assertEquals("constraint not added to table", constraint, table.findConstraint("uk"));
+        assertEquals("constraint not added to table", constraint, table.findIndex("uk"));
         assertEquals("column constraints wrong size", 1, column.uniqueConstraints().size());
         assertEquals("constraint not added to column", constraint, column.uniqueConstraints().get(0));
         assertEquals("unique key columns wrong size", 1, constraint.columns().size());
@@ -89,7 +89,7 @@ public class ColumnTest extends TestCase {
 
     public void testConstrainByMustBeCalledAfterColumnAddedToTable() {
         try {
-            new Column("id", 1, 0, 0, false).constrainBy(new UniqueConstraint("whatever"));
+            new Column("id", 1, 0, 0, false).indexedBy(new Index("whatever", true));
         } catch (IllegalStateException e) {
             assertEquals("column must be added to table before calling constrainBy()", e.getMessage());
         }

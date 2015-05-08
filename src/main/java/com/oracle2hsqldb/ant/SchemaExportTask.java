@@ -22,21 +22,21 @@
 
 package com.oracle2hsqldb.ant;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.Iterator;
+
 import org.apache.tools.ant.BuildException;
 
 import com.oracle2hsqldb.Configuration;
+import com.oracle2hsqldb.Index;
 import com.oracle2hsqldb.Schema;
 import com.oracle2hsqldb.SchemaWriter;
 import com.oracle2hsqldb.Sequence;
 import com.oracle2hsqldb.Table;
 import com.oracle2hsqldb.dialect.Dialect;
-
-
-import java.sql.SQLException;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.Iterator;
 
 /**
  * @author Rhett Sutphin
@@ -58,17 +58,19 @@ public class SchemaExportTask extends SchemaTask {
             Schema[] schemas = readSchemas();
             SchemaWriter schemaWriter = new SchemaWriter(new Configuration(true, true, true, dialect));
             FileWriter fileWriter = new FileWriter(file);
-            for (int i = 0; i < schemas.length; i++) {
-                for (Iterator it = schemas[i].tables().iterator(); it.hasNext();) {
-                    Table t = (Table) it.next();
+            for (Schema schema : schemas) {
+                for (Table t : schema.tables()) {
                     fileWriter.write(schemaWriter.write(t));
                     fileWriter.write(";\n");
+                    for (Index i : t.indicies()) {
+                    	fileWriter.write(schemaWriter.write(i));
+                    	fileWriter.write(";\n");
+                    }
                 }
-                for (Iterator it = schemas[i].sequences().iterator(); it.hasNext();) {
-                    Sequence seq = (Sequence) it.next();
+                for (Sequence seq : schema.sequences()) {
                     fileWriter.write(schemaWriter.write(seq));
                     fileWriter.write(";\n");
-                }
+                }                
             }
             fileWriter.close();
         } catch (SQLException e) {

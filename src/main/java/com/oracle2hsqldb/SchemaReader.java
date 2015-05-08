@@ -124,32 +124,32 @@ public class SchemaReader {
     private void readUniqueKeys(Schema schema, List<Table.Spec> tables) {
         log.info("Reading unique keys...");
 
-        List<UniqueConstraint.Spec> keys = configuration().dialect().getUniqueKeys(dataSource, schema.name(), tables);
-        for (UniqueConstraint.Spec spec : keys) {
+        List<Index.Spec> keys = configuration().dialect().getUniqueKeys(dataSource, schema.name(), tables);
+        for (Index.Spec spec : keys) {
             Table table = schema.findTable(spec.getTableName());
             if (table != null && spec.getColumnName() != null) {
                 Column indexed = table.findColumn(spec.getColumnName());
-                UniqueConstraint uniqueConstraint = table.findConstraint(spec.getConstraintName());
-                if (uniqueConstraint == null) {
-                    uniqueConstraint = new UniqueConstraint(spec.getConstraintName());
+                Index index = table.findIndex(spec.getIndexName());
+                if (index == null) {
+                    index = new Index(spec.getIndexName(), spec.isUnique());
                 }
-                indexed.constrainBy(uniqueConstraint);
+                indexed.indexedBy(index);
             }
         }
 
-        removeUniqueKeysOnlyContainingPrimaryKey(schema);
+        removeIndicesOnlyContainingPrimaryKey(schema);
     }
 
-    private void removeUniqueKeysOnlyContainingPrimaryKey(Schema schema) {
-        Iterator tables = schema.tables().iterator();
+    private void removeIndicesOnlyContainingPrimaryKey(Schema schema) {
+        Iterator<Table> tables = schema.tables().iterator();
 
         while (tables.hasNext()) {
-            Table table = (Table) tables.next();
-            Iterator constraints = table.constraints().iterator();
+            Table table = tables.next();
+            Iterator constraints = table.indicies().iterator();
             while (constraints.hasNext()) {
-                UniqueConstraint constraint = (UniqueConstraint) constraints.next();
+                Index constraint = (Index) constraints.next();
                 if (constraint.columns().size() == 1 && ((Column) constraint.columns().get(0)).isPrimaryKeyMember()) {
-                    table.removeConstraint(constraint);
+                    table.removeIndex(constraint);
                 }
             }
         }

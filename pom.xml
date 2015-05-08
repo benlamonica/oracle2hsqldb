@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>oracle2hsqldb</groupId>
 	<artifactId>oracle2hsqldb</artifactId>
-	<version>1.0</version>
+	<version>1.1-SNAPSHOT</version>
 	<name>Oracle To HSQLDB</name>
 	<description>exports the table structure from oracle to hsqldb</description>
 	<url>https://github.com/benlamonica/oracle2hsqldb</url>
@@ -67,6 +67,11 @@
 			<artifactId>easymock</artifactId>
 			<version>3.3.1</version>
 			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.neo4j</groupId>
+			<artifactId>neo4j-cypher-compiler-2.1</artifactId>
+			<version>2.1.2</version>
 		</dependency>
 	</dependencies>
 </project>

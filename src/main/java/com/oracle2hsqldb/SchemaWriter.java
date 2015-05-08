@@ -23,6 +23,7 @@
 package com.oracle2hsqldb;
 
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * @author Moses Hohman
@@ -56,28 +57,27 @@ public class SchemaWriter {
     }
     
     private String createTable(Table table) {
-        StringBuffer result = new StringBuffer("CREATE TABLE ").append(table.name()).append(" (\n");
-        for (Iterator columns = table.columns().iterator(); columns.hasNext();) {
+        StringBuilder result = new StringBuilder("CREATE TABLE ").append(table.name()).append(" (\n");
+        for (Iterator<Column> columns = table.columns().iterator(); columns.hasNext();) {
             Column column = (Column) columns.next();
             result.append("\t").append(write(column));
-            if (columns.hasNext() || table.constraints().size() > 0) {
+            if (columns.hasNext() || table.indicies().size() > 0) {
                 result.append(",");
             }
             result.append("\n");
         }
-        for (Iterator uniques = table.constraints().iterator(); uniques.hasNext();) {
-            UniqueConstraint constraint = (UniqueConstraint) uniques.next();
+        for (Iterator<Index> uniques = table.indicies().iterator(); uniques.hasNext();) {
+            Index index = uniques.next();
+            // skip non-unique indexes for right now, we will create them later.
+            if (!index.isUnique()) {
+            	continue;
+            }
             result.append("\t");
-            if (constraint.name() != null) {
-                result.append("CONSTRAINT ").append(constraint.name()).append(" ");
+            if (index.name() != null) {
+                result.append("CONSTRAINT ").append(index.name()).append(" ");
             }
             result.append("UNIQUE (");
-            for (Iterator columns = constraint.columns().iterator(); columns.hasNext();) {
-                result.append(((Column) columns.next()).name());
-                if (columns.hasNext()) {
-                    result.append(", ");
-                }
-            }
+            result.append(getCommaSeparatedColString(index.columns()));
             result.append(")");
             if (uniques.hasNext()) {
                 result.append(",");
@@ -89,13 +89,13 @@ public class SchemaWriter {
     }
 
     private String createView(View view) {
-        StringBuffer result = new StringBuffer();
+        StringBuilder result = new StringBuilder();
         result.append("CREATE VIEW ").append(view.name()).append(" AS ").append(view.text());
         return result.toString();
     }
 
     public String write(Column column) {
-        StringBuffer result = new StringBuffer(column.name());
+        StringBuilder result = new StringBuilder(column.name());
         String typeName = getTypeName(column);
         result.append(" ").append(typeName);
         int size = getSize(column);
@@ -122,7 +122,7 @@ public class SchemaWriter {
         return result.toString();
     }
 
-    private StringBuffer appendDefaultValue(Column column, StringBuffer result) {
+    private StringBuilder appendDefaultValue(Column column, StringBuilder result) {
         return result.append(configuration.dialect().formatDefaultValue(column));
     }
 
@@ -138,18 +138,38 @@ public class SchemaWriter {
         return configuration.dialect().getSize(column);
     }
 
-    private void appendIdentityColumnString(StringBuffer result) {
+    private void appendIdentityColumnString(StringBuilder result) {
         result.append(" ").append(configuration.dialect().getIdentityColumnString());
     }
 
     public String write(Sequence sequence) {
         if (!configuration.dialect().supportsSequences()) throw new IllegalStateException(configuration.dialect() + " does not support sequences");
         // This syntax is vaild for Oracle and HSQLDB
-        StringBuffer result = new StringBuffer();
+        StringBuilder result = new StringBuilder();
         result.append("CREATE SEQUENCE ").append(sequence.name());
         if (sequence.value() != null) {
             result.append(" START WITH ").append(sequence.value());
         }
         return result.toString();
     }
+
+    private String getCommaSeparatedColString(List<Column> cols) {
+    	StringBuilder result = new StringBuilder();
+        for (Column col : cols) {
+            if (result.length() != 0) {
+                result.append(", ");
+            }
+            result.append(col.name());
+        }
+    	
+    	return result.toString();
+    }
+    
+	public String write(Index i) {
+		if (!i.isUnique()) { // unique indices were created as part of the table definition
+			return String.format("CREATE INDEX %s ON %s(%s)", i.name(), i.columns().get(0).owner().name(), getCommaSeparatedColString(i.columns()));
+		}
+
+		return "";
+	}
 }

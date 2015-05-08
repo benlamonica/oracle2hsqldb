@@ -29,33 +29,39 @@ import java.util.List;
 /**
  * @author Moses Hohman
  */
-public class UniqueConstraint {
+public class Index {
     private String name;
-    private List columns;
+    private boolean isUnique;
+    private List<Column> columns;
 
-    public UniqueConstraint(String name) {
+    public Index(String name, boolean isUnique) {
         this.name = name;
-        this.columns = new ArrayList();
+        this.isUnique = isUnique;
+        this.columns = new ArrayList<Column>();
     }
 
     public String name() {
         return name;
+    }
+    
+    public boolean isUnique() {
+    	return isUnique;
     }
 
     public void name(String name) {
         this.name = name;
     }
 
-    public List columns() {
+    public List<Column> columns() {
         return columns;
     }
 
     public void addColumn(Column column) {
         boolean isNewColumn = true;
-        for (Iterator cols = columns.iterator(); cols.hasNext();) {
-            Column existingColumn = (Column) cols.next();
+        for (Iterator<Column> cols = columns.iterator(); cols.hasNext();) {
+            Column existingColumn = cols.next();
             if (!column.owner().equals(existingColumn.owner())) {
-                throw new IllegalStateException("all constraint columns must have the same owning table");
+                throw new IllegalStateException("all index columns must have the same owning table");
             }
             if (existingColumn.equals(column)) {
                 isNewColumn = false;
@@ -67,18 +73,24 @@ public class UniqueConstraint {
     }
 
     public static class Spec {
-        private String constraintName;
+        private String indexName;
         private String columnName;
         private String tableName;
-
-        public Spec(String tableName, String columnName, String constraintName) {
+        private boolean isUnique;
+        
+        public Spec(String tableName, String columnName, String indexName, boolean isUnique) {
             this.tableName = tableName;
             this.columnName = columnName;
-            this.constraintName = constraintName;
+            this.indexName = indexName;
+            this.isUnique = isUnique;
         }
 
-        public String getConstraintName() {
-            return constraintName;
+        public boolean isUnique() {
+        	return isUnique;
+        }
+        
+        public String getIndexName() {
+            return indexName;
         }
 
         public String getColumnName() {

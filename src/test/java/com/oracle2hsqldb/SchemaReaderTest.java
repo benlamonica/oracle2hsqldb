@@ -36,7 +36,7 @@ import com.oracle2hsqldb.PrimaryKey;
 import com.oracle2hsqldb.Schema;
 import com.oracle2hsqldb.SchemaReader;
 import com.oracle2hsqldb.Table;
-import com.oracle2hsqldb.UniqueConstraint;
+import com.oracle2hsqldb.Index;
 
 /**
  * @author Moses Hohman
@@ -218,7 +218,7 @@ public class SchemaReaderTest extends TestCase {
     public void testUniqueKeyWithTwoColumns() {
         Table t_folks = schema.findTable("T_FOLKS");
 
-        UniqueConstraint tableUniqueKey = t_folks.findConstraint("SYS_IDX_UK_FOLKS_NAMES"); //hsqldb names the indexes differently from the constraints
+        Index tableUniqueKey = t_folks.findIndex("SYS_IDX_UK_FOLKS_NAMES"); //hsqldb names the indexes differently from the constraints
         assertNotNull("table unique key null", tableUniqueKey);
 
         Column firstName = t_folks.findColumn("FIRST_NAME");
@@ -230,7 +230,7 @@ public class SchemaReaderTest extends TestCase {
 
         List uniqueKeys = firstName.uniqueConstraints();
         assertEquals("more than 1 unique key", 1, uniqueKeys.size());
-        UniqueConstraint uniqueKey = (UniqueConstraint) uniqueKeys.get(0);
+        Index uniqueKey = (Index) uniqueKeys.get(0);
 
         assertEquals("unique keys not the same between table and column", tableUniqueKey, uniqueKey);
 
@@ -241,13 +241,13 @@ public class SchemaReaderTest extends TestCase {
 
     public void testDoesNotCreateUniqueKeyForPrimaryKey() {
         Table t_books = schema.findTable(BOOK_TABLE_NAME);
-        assertEquals(0, t_books.constraints().size());
+        assertEquals(0, t_books.indicies().size());
     }
 
     public void testAllowsPrimaryKeyToParticipateInMulticolumnUniqueKey() {
         Table t_personnel = schema.findTable("T_PERSONNEL");
-        assertEquals("no constraints", 1, t_personnel.constraints().size());
-        UniqueConstraint constraint = (UniqueConstraint) t_personnel.constraints().get(0);
+        assertEquals("no constraints", 1, t_personnel.indicies().size());
+        Index constraint = (Index) t_personnel.indicies().get(0);
         assertEquals(2, constraint.columns().size());
         assertEquals("ID", ((Column) constraint.columns().get(0)).name());
         assertEquals("USERNAME", ((Column) constraint.columns().get(1)).name());

@@ -33,7 +33,7 @@ import java.util.Set;
  */
 public class PrimaryKey {
     private String name;
-    private Set columns = new HashSet();
+    private Set<Column> columns = new HashSet<Column>();
 
     public String name() {
         return name;
@@ -53,8 +53,8 @@ public class PrimaryKey {
         columns.add(column);
     }
 
-    public List columns() {
-        return new LinkedList(columns);
+    public List<Column> columns() {
+        return new LinkedList<Column>(columns);
     }
 
     public String toString() {
@@ -64,12 +64,12 @@ public class PrimaryKey {
     public static class Spec {
         private String tableName;
         private String name;
-        private List columnNames;
+        private List<String> columnNames;
 
         public Spec(String tableName, String name) {
             this.tableName = tableName;
             this.name = name;
-            this.columnNames = new LinkedList();
+            this.columnNames = new LinkedList<String>();
         }
 
         public void addColumnName(String name) {
@@ -80,8 +80,8 @@ public class PrimaryKey {
             PrimaryKey key = new PrimaryKey();
             key.name(this.name);
 
-            for (Iterator columnNames = this.columnNames.iterator(); columnNames.hasNext(); ) {
-                String columnName = (String) columnNames.next();
+            for (Iterator<String> columnNames = this.columnNames.iterator(); columnNames.hasNext(); ) {
+                String columnName = columnNames.next();
                 key.addColumn(table.findColumn(columnName));
             }
 

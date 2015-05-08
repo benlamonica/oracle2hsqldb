@@ -36,8 +36,8 @@ import java.util.Map;
 public class Table {
     private String name;
     private PrimaryKey primaryKey;
-    private List columns = new LinkedList();
-    private Map<String, UniqueConstraint> constraints = new HashMap<String, UniqueConstraint>();
+    private List<Column> columns = new LinkedList<Column>();
+    private Map<String, Index> indicies = new HashMap<String, Index>();
     private Type type;
 
     public Table(String name) {
@@ -57,14 +57,14 @@ public class Table {
         return type;
     }
 
-    public List columns() {
+    public List<Column> columns() {
         return Collections.unmodifiableList(columns);
     }
 
     public Column findColumn(String name) {
-        Iterator cols = columns.iterator();
+        Iterator<Column> cols = columns.iterator();
         while (cols.hasNext()) {
-            Column col = (Column) cols.next();
+            Column col = cols.next();
             if (col.name().equals(name)) {
                 return col;
             }
@@ -78,7 +78,7 @@ public class Table {
     }
 
     public void primaryKey(PrimaryKey pk) {
-        Iterator pkColumns = pk.columns().iterator();
+        Iterator<Column> pkColumns = pk.columns().iterator();
         while (pkColumns.hasNext()) {
             if (!columns.contains(pkColumns.next())) {
                 throw new IllegalArgumentException("No such column");
@@ -93,40 +93,40 @@ public class Table {
 
     public String toString() {
         StringBuffer result = new StringBuffer("[Table ").append(name).append(":").append(System.getProperty("line.separator"));
-        for(Iterator cols = columns.iterator(); cols.hasNext(); ) {
+        for(Iterator<Column> cols = columns.iterator(); cols.hasNext(); ) {
             result.append("\t").append(cols.next()).append(System.getProperty("line.separator"));
         }
         return result.append("]").toString();
     }
 
-    public UniqueConstraint findConstraint(String name) {
-    	for (String constraintName : constraints.keySet()) {
-			if (constraintName.startsWith(name)) {
-				return constraints.get(constraintName);
+    public Index findIndex(String name) {
+    	for (String indexName : indicies.keySet()) {
+			if (indexName.startsWith(name)) {
+				return indicies.get(indexName);
 			}
 		}
         return null;
     }
 
-    public void addConstraint(UniqueConstraint constraint) {
-        constraints.put(constraint.name(), constraint);
+    public void addIndex(Index index) {
+        indicies.put(index.name(), index);
     }
 
-    public List constraints() {
-        return Collections.unmodifiableList(new ArrayList(constraints.values()));
+    public List<Index> indicies() {
+        return Collections.unmodifiableList(new ArrayList<Index>(indicies.values()));
     }
 
-    public void removeConstraint(UniqueConstraint constraint) {
-        constraints.remove(constraint.name());
+    public void removeIndex(Index index) {
+        indicies.remove(index.name());
     }
 
-    public List constraintsFor(Column column) {
-        Iterator cons = constraints().iterator();
-        List result = new LinkedList();
+    public List<Index> indexFor(Column column) {
+        Iterator<Index> cons = indicies().iterator();
+        List<Index> result = new LinkedList<Index>();
         while (cons.hasNext()) {
-            UniqueConstraint constraint = (UniqueConstraint) cons.next();
-            if (constraint.columns().contains(column)) {
-                result.add(constraint);
+            Index index = cons.next();
+            if (index.columns().contains(column)) {
+                result.add(index);
             }
         }
         return result;
@@ -148,7 +148,7 @@ public class Table {
     }
 
     public static class Type {
-        private static Map byName = new HashMap();
+        private static Map<String, Type> byName = new HashMap<String, Type>();
         public static final Type TABLE = new Type("TABLE");
         public static final Type VIEW = new Type("VIEW");
 

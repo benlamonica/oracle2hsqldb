@@ -99,7 +99,7 @@ public class Column {
     public boolean isUnique() {
         if (!isUniqueKeyMember()) return false;
         for(Iterator constraints = uniqueConstraints().iterator(); constraints.hasNext();) {
-            UniqueConstraint uniqueConstraint = (UniqueConstraint) constraints.next();
+            Index uniqueConstraint = (Index) constraints.next();
             if (uniqueConstraint.columns().size()==1) {
                 return true;
             }
@@ -125,17 +125,17 @@ public class Column {
     }
 
     public List uniqueConstraints() {
-        return owner().constraintsFor(this);
+        return owner().indexFor(this);
     }
 
-    public void constrainBy(UniqueConstraint uniqueConstraint) {
+    public void indexedBy(Index index) {
         if (owner()==null) throw new IllegalStateException("column must be added to table before calling constrainBy()");
-        UniqueConstraint tableConstraint = owner().findConstraint(uniqueConstraint.name());
-        if (tableConstraint==null) {
-            owner().addConstraint(uniqueConstraint);
-            tableConstraint = uniqueConstraint;
+        Index tableIndex = owner().findIndex(index.name());
+        if (tableIndex==null) {
+            owner().addIndex(index);
+            tableIndex = index;
         }
-        tableConstraint.addColumn(this);
+        tableIndex.addColumn(this);
     }
 
     public boolean equals(Object o) {

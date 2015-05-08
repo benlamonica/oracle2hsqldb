@@ -33,7 +33,7 @@ import com.oracle2hsqldb.PrimaryKey;
 import com.oracle2hsqldb.SchemaWriter;
 import com.oracle2hsqldb.Sequence;
 import com.oracle2hsqldb.Table;
-import com.oracle2hsqldb.UniqueConstraint;
+import com.oracle2hsqldb.Index;
 import com.oracle2hsqldb.View;
 import com.oracle2hsqldb.dialect.HSQLDialect;
 import com.oracle2hsqldb.dialect.Oracle9Dialect;
@@ -149,7 +149,7 @@ public class SchemaWriterTest extends TestCase {
         t.addColumn(new Column("ID", Types.INTEGER, 0, 0, false));
         Column uniqueColumn = new Column("NAME", Types.VARCHAR, 20, 0, true);
         t.addColumn(uniqueColumn);
-        uniqueColumn.constrainBy(new UniqueConstraint("UK_NAME"));
+        uniqueColumn.indexedBy(new Index("UK_NAME", true));
         assertEquals("CREATE TABLE T_BLAH (\n" +
                 "\tID INTEGER NOT NULL,\n" +
                 "\tNAME VARCHAR2(20),\n" +
@@ -164,9 +164,9 @@ public class SchemaWriterTest extends TestCase {
         Column lastName = new Column("LAST_NAME", Types.VARCHAR, 20, 0, true);
         t.addColumn(firstName);
         t.addColumn(lastName);
-        UniqueConstraint uniqueConstraint = new UniqueConstraint("UK_NAME");
-        firstName.constrainBy(uniqueConstraint);
-        lastName.constrainBy(uniqueConstraint);
+        Index uniqueConstraint = new Index("UK_NAME", true);
+        firstName.indexedBy(uniqueConstraint);
+        lastName.indexedBy(uniqueConstraint);
         assertEquals("CREATE TABLE T_BLAH (\n" +
                 "\tID INTEGER NOT NULL,\n" +
                 "\tFIRST_NAME VARCHAR2(20),\n" +
