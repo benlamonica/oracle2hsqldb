@@ -124,7 +124,7 @@ public class SchemaReader {
     private void readUniqueKeys(Schema schema, List<Table.Spec> tables) {
         log.info("Reading unique keys...");
 
-        List<Index.Spec> keys = configuration().dialect().getUniqueKeys(dataSource, schema.name(), tables);
+        List<Index.Spec> keys = configuration().dialect().getIndicies(dataSource, schema.name(), tables);
         for (Index.Spec spec : keys) {
             Table table = schema.findTable(spec.getTableName());
             if (table != null && spec.getColumnName() != null) {

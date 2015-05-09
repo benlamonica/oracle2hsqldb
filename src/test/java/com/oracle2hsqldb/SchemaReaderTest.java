@@ -241,7 +241,9 @@ public class SchemaReaderTest extends TestCase {
 
     public void testDoesNotCreateUniqueKeyForPrimaryKey() {
         Table t_books = schema.findTable(BOOK_TABLE_NAME);
-        assertEquals(0, t_books.indicies().size());
+        for (Index i : t_books.indicies()) {
+			assertFalse("index " + i.name() + " is unique!" + i, i.isUnique());
+		}        
     }
 
     public void testAllowsPrimaryKeyToParticipateInMulticolumnUniqueKey() {

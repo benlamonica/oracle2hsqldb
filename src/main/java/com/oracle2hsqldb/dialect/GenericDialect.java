@@ -179,23 +179,36 @@ public class GenericDialect implements Dialect {
     }
 
     @Override
-    public List<Index.Spec> getUniqueKeys(DataSource dataSource, final String schemaName, List<Table.Spec> tables) {
+    public List<Index.Spec> getIndicies(DataSource dataSource, final String schemaName, List<Table.Spec> tables) {
         final List<Index.Spec> result = new ArrayList<Index.Spec>();
+        
+        final RowCallbackHandler INDEX_CALLBACK_HANDLER = new RowCallbackHandler() {
+            public void processRow(ResultSet uniqueIndexes) throws SQLException {
+                boolean isNonUnique = uniqueIndexes.getBoolean("NON_UNIQUE");
+                String columnName = uniqueIndexes.getString("COLUMN_NAME");
+                String constraintName = uniqueIndexes.getString("INDEX_NAME");
+                String tableName = uniqueIndexes.getString("TABLE_NAME");
+                result.add(new Index.Spec(tableName, columnName, constraintName, !isNonUnique));
+            }
+        };
+
         for (final Table.Spec table : tables) {
+        	// first get the unique indexes
 	        MetaDataJdbcTemplate template = new MetaDataJdbcTemplate(dataSource) {
 	            protected ResultSet getResults(DatabaseMetaData metaData) throws SQLException {
 	                return metaData.getIndexInfo(null, schemaName, table.getTableName(), true, true);
 	            }
 	        };
-	        template.query(new RowCallbackHandler() {
-	            public void processRow(ResultSet uniqueIndexes) throws SQLException {
-	                boolean isNonUnique = uniqueIndexes.getBoolean("NON_UNIQUE");
-                    String columnName = uniqueIndexes.getString("COLUMN_NAME");
-                    String constraintName = uniqueIndexes.getString("INDEX_NAME");
-                    String tableName = uniqueIndexes.getString("TABLE_NAME");
-	                result.add(new Index.Spec(tableName, columnName, constraintName, !isNonUnique));
+	        template.query(INDEX_CALLBACK_HANDLER);
+	        
+	        // and then the non-unique indexes
+	        template = new MetaDataJdbcTemplate(dataSource) {
+	            protected ResultSet getResults(DatabaseMetaData metaData) throws SQLException {
+	                return metaData.getIndexInfo(null, schemaName, table.getTableName(), false, true);
 	            }
-	        });
+	        };
+	        template.query(INDEX_CALLBACK_HANDLER);
+
         }
         return result;
     }

@@ -72,6 +72,11 @@ public class Index {
         }
     }
 
+    
+    public String toString() {
+    	return (isUnique() ? "UNIQUE" : "NOT-UNIQUE") + " INDEX " + name() + "[" + columns + "]"; 
+    }
+    
     public static class Spec {
         private String indexName;
         private String columnName;

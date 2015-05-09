@@ -64,7 +64,7 @@ public interface Dialect {
 
     Map<String, PrimaryKey.Spec> getPrimaryKeys(DataSource dataSource, String schemaName, List<Table.Spec> tables);
 
-    List<Index.Spec> getUniqueKeys(DataSource dataSource, String schemaName, List<Table.Spec> tables);
+    List<Index.Spec> getIndicies(DataSource dataSource, String schemaName, List<Table.Spec> tables);
 
     int getType(String dataTypeName);
 
