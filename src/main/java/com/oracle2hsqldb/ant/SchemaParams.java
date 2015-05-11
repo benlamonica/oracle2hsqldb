@@ -38,6 +38,7 @@ import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Task;
 
 import com.oracle2hsqldb.Configuration;
+import com.oracle2hsqldb.Index;
 import com.oracle2hsqldb.Schema;
 import com.oracle2hsqldb.SchemaReader;
 import com.oracle2hsqldb.SchemaWriter;
@@ -112,6 +113,12 @@ public class SchemaParams implements Validatable, TableFilter {
                 Table table = tables.next();
                 log("writing table: " + table.name() + "\n" + writer.write(table), Project.MSG_VERBOSE);
                 statement.executeUpdate(writer.write(table));
+                for (Index index : table.indicies()) {
+                	log("writing index: " + index.name() + "\n" + writer.write(index), Project.MSG_VERBOSE);
+                	if (!index.isUnique()) { // only do non-unique indices, since the unique ones are created during table creation
+                		statement.executeUpdate(writer.write(index));
+                	}
+				}
             }
             if (copySequences) {
                 log("WRITING SEQUENCES", Project.MSG_VERBOSE);

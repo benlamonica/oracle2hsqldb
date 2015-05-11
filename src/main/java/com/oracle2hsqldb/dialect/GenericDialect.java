@@ -196,20 +196,11 @@ public class GenericDialect implements Dialect {
         	// first get the unique indexes
 	        MetaDataJdbcTemplate template = new MetaDataJdbcTemplate(dataSource) {
 	            protected ResultSet getResults(DatabaseMetaData metaData) throws SQLException {
-	                return metaData.getIndexInfo(null, schemaName, table.getTableName(), true, true);
-	            }
-	        };
-	        template.query(INDEX_CALLBACK_HANDLER);
-	        
-	        // and then the non-unique indexes
-	        template = new MetaDataJdbcTemplate(dataSource) {
-	            protected ResultSet getResults(DatabaseMetaData metaData) throws SQLException {
 	                return metaData.getIndexInfo(null, schemaName, table.getTableName(), false, true);
 	            }
 	        };
 	        template.query(INDEX_CALLBACK_HANDLER);
-
-        }
+	    }
         return result;
     }
 
