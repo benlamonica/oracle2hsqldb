@@ -114,8 +114,8 @@ public class SchemaParams implements Validatable, TableFilter {
                 log("writing table: " + table.name() + "\n" + writer.write(table), Project.MSG_VERBOSE);
                 statement.executeUpdate(writer.write(table));
                 for (Index index : table.indicies()) {
-                	log("writing index: " + index.name() + "\n" + writer.write(index), Project.MSG_VERBOSE);
                 	if (!index.isUnique()) { // only do non-unique indices, since the unique ones are created during table creation
+                    	log("writing index: " + index.name() + "\n" + writer.write(index), Project.MSG_VERBOSE);
                 		statement.executeUpdate(writer.write(index));
                 	}
 				}

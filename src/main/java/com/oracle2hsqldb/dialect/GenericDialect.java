@@ -192,14 +192,31 @@ public class GenericDialect implements Dialect {
             }
         };
 
+        final RowCallbackHandler FK_CALLBACK_HANDLER = new RowCallbackHandler() {
+            public void processRow(ResultSet foreignKeys) throws SQLException {
+                String columnName = foreignKeys.getString("FKCOLUMN_NAME");
+                String constraintName = foreignKeys.getString("FK_NAME");
+                String tableName = foreignKeys.getString("FKTABLE_NAME");
+                result.add(new Index.Spec(tableName, columnName, constraintName, false));
+            }
+        };
+
         for (final Table.Spec table : tables) {
-        	// first get the unique indexes
+        	// first get the indexes
 	        MetaDataJdbcTemplate template = new MetaDataJdbcTemplate(dataSource) {
 	            protected ResultSet getResults(DatabaseMetaData metaData) throws SQLException {
 	                return metaData.getIndexInfo(null, schemaName, table.getTableName(), false, true);
 	            }
 	        };
 	        template.query(INDEX_CALLBACK_HANDLER);
+	        
+        	// then also get the foreign keys..we're not going to create these constraints, but will create an index so that joins are faster
+	        MetaDataJdbcTemplate fkTemplate = new MetaDataJdbcTemplate(dataSource) {
+	            protected ResultSet getResults(DatabaseMetaData metaData) throws SQLException {
+	                return metaData.getExportedKeys(null, schemaName, table.getTableName());
+	            }
+	        };
+	        fkTemplate.query(FK_CALLBACK_HANDLER);
 	    }
         return result;
     }
