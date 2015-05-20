@@ -213,7 +213,7 @@ public class GenericDialect implements Dialect {
         	// then also get the foreign keys..we're not going to create these constraints, but will create an index so that joins are faster
 	        MetaDataJdbcTemplate fkTemplate = new MetaDataJdbcTemplate(dataSource) {
 	            protected ResultSet getResults(DatabaseMetaData metaData) throws SQLException {
-	                return metaData.getExportedKeys(null, schemaName, table.getTableName());
+	                return metaData.getImportedKeys(null, schemaName, table.getTableName());
 	            }
 	        };
 	        fkTemplate.query(FK_CALLBACK_HANDLER);
